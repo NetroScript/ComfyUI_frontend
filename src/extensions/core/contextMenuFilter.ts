@@ -1,5 +1,6 @@
 import { LiteGraph, LGraphCanvas } from '@comfyorg/litegraph'
 import { app } from '../../scripts/app'
+import FuzzySearch from 'fz-search'
 
 // Adds filtering to combo context menus
 
@@ -25,6 +26,44 @@ const ext = {
         ) as HTMLElement[]
         let displayedItems = [...items]
         let itemCount = displayedItems.length
+
+        let fuzzySearchEnabled = app.ui.settings.getSettingValue(
+          'Comfy.FuzzySearch.ContextMenuFilterEnabled'
+        )
+
+        console.log('Fuzzy search enabled: ', fuzzySearchEnabled)
+
+        let fuzzySearch: FuzzySearch
+
+        // Only process the data for the fuzzy search if enabled in the settings
+        if (fuzzySearchEnabled) {
+          const searchMap = items.map((item) => {
+            return {
+              element: item,
+              text: item.textContent
+            }
+          })
+
+          let resultCount = app.ui.settings.getSettingValue(
+            'Comfy.FuzzySearch.ResultCount'
+          )
+          let threshInclude = app.ui.settings.getSettingValue(
+            'Comfy.FuzzySearch.IncludeThreshold'
+          )
+          let threshIncludeRelative = app.ui.settings.getSettingValue(
+            'Comfy.FuzzySearch.IncludeThresholdRelative'
+          )
+
+          // Construct fuzzy search object
+          fuzzySearch = new FuzzySearch({
+            // @ts-expect-error The underlying library is not typed but does actually support these options as long as they are not used for searching
+            source: searchMap,
+            keys: ['text'],
+            output_limit: resultCount,
+            thresh_include: threshInclude,
+            thresh_relative_to_best: threshIncludeRelative
+          })
+        }
 
         // We must request an animation frame for the current node of the active canvas to update.
         requestAnimationFrame(() => {
@@ -117,15 +156,31 @@ const ext = {
           })
 
           filter.addEventListener('input', () => {
-            // Hide all items that don't match our filter
-            const term = filter.value.toLocaleLowerCase()
-            // When filtering, recompute which items are visible for arrow up/down and maintain selection.
-            displayedItems = items.filter((item) => {
-              const isVisible =
-                !term || item.textContent.toLocaleLowerCase().includes(term)
-              item.style.display = isVisible ? 'block' : 'none'
-              return isVisible
-            })
+            if (fuzzySearchEnabled) {
+              const termFuzzy = filter.value
+              // @ts-expect-error Specifying no output path returns the input object with the same typing
+              const found: { element: HTMLElement; text: string }[] =
+                fuzzySearch.search(termFuzzy)
+              const foundElementSet = new Set(found.map((f) => f.element))
+              console.log(found)
+              // When filtering, recompute which items are visible for arrow up/down and maintain selection.
+              displayedItems = items.filter((item) => {
+                const isVisible = !termFuzzy || foundElementSet.has(item)
+                item.style.display = isVisible ? 'block' : 'none'
+                return isVisible
+              })
+            } else {
+              // Hide all items that don't match our filter
+              const term = filter.value.toLocaleLowerCase()
+
+              // When filtering, recompute which items are visible for arrow up/down and maintain selection.
+              displayedItems = items.filter((item) => {
+                const isVisible =
+                  !term || item.textContent.toLocaleLowerCase().includes(term)
+                item.style.display = isVisible ? 'block' : 'none'
+                return isVisible
+              })
+            }
 
             selectedIndex = 0
             if (displayedItems.includes(selectedItem)) {

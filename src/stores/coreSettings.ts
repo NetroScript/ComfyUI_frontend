@@ -335,6 +335,49 @@ export const CORE_SETTINGS: SettingParams[] = [
     defaultValue: 0
   },
   {
+    id: 'Comfy.FuzzySearch.ContextMenuFilterEnabled',
+    category: ['Comfy', 'Fuzzy Search', 'FuzzySearchContextMenuFilterEnabled'],
+    name: 'Enable fuzzy search in context menu',
+    tooltip: 'Fuzzy search allows for spelling mistakes and partial matches',
+    type: 'boolean',
+    defaultValue: true
+  },
+  {
+    id: 'Comfy.FuzzySearch.ResultCount',
+    category: ['Comfy', 'Fuzzy Search', 'FuzzySearchResultCount'],
+    name: 'Number of fuzzy search results',
+    tooltip: 'Set to 0 to show all results',
+    type: 'slider',
+    defaultValue: 0
+  },
+  {
+    id: 'Comfy.FuzzySearch.IncludeThreshold',
+    category: ['Comfy', 'Fuzzy Search', 'FuzzySearchIncludeThreshold'],
+    name: 'Fuzzy search include threshold',
+    tooltip: 'Lower values include more results',
+    type: 'slider',
+    defaultValue: 5.0,
+    attrs: {
+      min: 0.0,
+      max: 20.0,
+      step: 0.1
+    }
+  },
+  {
+    id: 'Comfy.FuzzySearch.IncludeThresholdRelative',
+    category: ['Comfy', 'Fuzzy Search', 'FuzzySearchIncludeThresholdRelative'],
+    name: 'Fuzzy search relative threshold to best match',
+    tooltip:
+      'All results after the best match that are within this score percentage are included',
+    type: 'slider',
+    defaultValue: 0.6,
+    attrs: {
+      min: 0.0,
+      max: 1.0,
+      step: 0.01
+    }
+  },
+  {
     id: 'Comfy.EnableTooltips',
     category: ['Comfy', 'Node', 'EnableTooltips'],
     name: 'Enable Tooltips',
